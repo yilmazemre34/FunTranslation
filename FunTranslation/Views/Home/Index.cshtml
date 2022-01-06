@@ -1,0 +1,136 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link href="~/Content/Base.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+    <title>Index</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div style="float:left;width:50%">
+        <br />
+        <div>
+            <h3>Funny Translate</h3>
+        </div>
+        <br />
+        <div class="input-group input-group-lg">
+            <textarea class="form-control" id="original-text" rows="4" placeholder="Enter your text.."></textarea>
+            <br />
+        </div>
+        <div>
+            <br />
+            <button class="btn btn-secondary btn-lg" id="btntranslate">Translate</button>
+        </div>
+        <br />
+        <textarea name="translated"
+                  class="form-control"
+                  id="translated-text"
+                  rows="4">
+        </textarea>
+    </div>
+    <div style="float:right;width:50%;padding-left:10px">
+        <br />
+        <h3>Translate History</h3>
+        <br />
+        <div>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Original Text</th>
+                        <th scope="col">Translated Text</th>
+                    </tr>
+                </thead>
+                <tbody id="table">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>
+
+
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: "/Home/GetTranslations",
+            type: "GET",
+            success: function (data) {
+                $.each(data, function (key, value) {
+                    var item = "<tr><td>" + value.TranslationID + "</td><td>" + value.OriginalText + "</td><td>" + value.TranslatedText + "</td></tr>";
+                    $("#table").append(item);
+
+                });
+            },
+            error: function (err) {
+                console.log(err);
+                alert("Hata");
+            }
+        })
+    })
+</script>
+
+<script>
+    var originalText = document.querySelector("#original-text");
+    var translatedText = document.querySelector("#translated-text");
+    var translateBtn = document.querySelector("#btntranslate");
+    var serverURL = "https://api.funtranslations.com/translate/yoda.json";
+    function getURL(text) {
+        return serverURL + "?" + "text=" + text;
+    }
+
+
+      async function translate() {
+        var inputText = originalText.value;
+        if (inputText == '') {
+            alert('Please enter some text to translate.')
+        }
+        else {
+            fetch(getURL(inputText))
+                .then((response) => response.json())
+                .then(json => {
+                    var translatedtext = json.contents.translated;
+                    translatedText.innerText = translatedtext;
+                    var translate = {
+                        "OriginalText": $("#original-text").val(),
+                        "TranslatedText": json.contents.translated,
+                    }
+                    $.ajax({
+                        url: "/Home/AddTranslation",
+                        type: "POST",
+                        timeout: 1000,
+                        data: translate,
+                        success: function (resp) {
+                            if (resp == "ok") {
+                                console.log("kayıt başarılı")
+                                window.location.reload()
+                            }
+                            else {
+                                console.log("Kayıt başarısız");
+                                console.log(resp)
+                            }
+                        }
+                    })
+                })
+
+        }
+
+    }
+
+
+    translateBtn.addEventListener("click", translate);
+
+</script>
